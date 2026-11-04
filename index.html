@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0c0f"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Field Tracker">
+<link rel="manifest" href="manifest.webmanifest"><title>Field Operations · Door Tracker</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#090a0d;color:#f7f7f8}
+*{box-sizing:border-box}body{margin:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}main{max-width:610px;margin:auto;padding:24px 16px 50px}
+h1{font-size:26px;letter-spacing:-.8px;margin:4px 0}h2{font-size:19px;margin:0 0 14px}small,.muted{color:#a2a4ae}.eyebrow{font-size:11px;font-weight:750;letter-spacing:1.7px;color:#aaaeb8}
+.panel{background:#14161b;border:1px solid #2c2e35;border-radius:20px;padding:18px;margin:16px 0}
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px}.houseicon{font-size:26px}
+.goalnum{font-size:35px;font-weight:800;letter-spacing:-1px;margin:7px 0}.goalnum span{font-size:18px;color:#999}
+.progress{height:11px;background:#34363c;border-radius:99px;overflow:hidden;margin:10px 0}.fill{height:100%;background:#f5f5f5;width:0%;transition:width .2s}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#202228;border-radius:17px;padding:15px;min-width:0}.stat.wide{grid-column:1/-1}
+.statlabel{color:#b9bbc3;font-size:15px}.statbottom{display:flex;justify-content:space-between;align-items:center;gap:7px;margin-top:9px}.num{font-size:31px;font-weight:750;font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:7px}button{font:inherit;cursor:pointer;touch-action:manipulation}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #b2c9ff;outline-offset:2px}
+.round{width:39px;height:39px;border-radius:50%;border:1px solid #5d6068;background:transparent;color:white;font-size:24px;line-height:1}.round.plus{background:white;color:#101115;border-color:white}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;background:#22242a;border-radius:16px;padding:5px;margin:20px 0}.tabs button{border:0;background:transparent;color:#bcbec6;padding:11px;border-radius:12px}.tabs button.active{background:#44464f;color:white;font-weight:700}
+input,select{width:100%;border:1px solid #50525b;background:#24262d;color:white;border-radius:12px;padding:13px;font-size:16px}
+label{display:block;font-size:13px;color:#c3c5ce;margin:12px 0 7px}.primary,.secondary,.danger{border:0;border-radius:13px;padding:13px 15px;font-weight:700}.primary{background:#f4f4f6;color:#101115}.secondary{background:#33363f;color:#fff}.danger{background:#53262c;color:#fff}
+.full{width:100%;margin-top:12px}.row{display:flex;justify-content:space-between;align-items:center;gap:10px}.pill{background:#30323a;border-radius:30px;padding:5px 10px;color:#d8d9de;font-size:12px}
+.filter{display:flex;gap:7px;margin:14px 0}.filter button{flex:1;padding:10px 5px;border-radius:10px;background:#292b33;border:1px solid transparent;color:#ccc;font-size:13px}.filter button.active{border-color:#d5d5da;color:white}
+.house{padding:13px 0;border-bottom:1px solid #35363c;display:flex;justify-content:space-between;align-items:center;gap:10px}.house .addr{font-weight:650;overflow-wrap:anywhere}.house .sub{font-size:12px;color:#aeb0b8;margin-top:4px}.house button{background:#33363e;border:0;border-radius:9px;color:white;padding:9px;font-size:12px}
+.summary{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini{background:#25272e;padding:14px;border-radius:12px}.mini strong{font-size:25px;display:block}.mini small{font-size:12px}
+.checkpoint{padding:13px 0;border-bottom:1px solid #34363d}.checkright{font-size:13px;color:#b9bbc3}
+.notice{font-size:12px;color:#aeb0b8;line-height:1.5;margin-top:14px}.hidden{display:none!important}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.actions button{font-size:13px}.green{color:#79dba5}.red{color:#ffb3b3}
+</style></head><body><main>
+<div class="head"><div><div class="eyebrow">FIELD OPERATIONS</div><h1>Door-to-Door Dashboard</h1><div class="muted" style="font-size:13px">1:00 PM – 5:00 PM · First pass</div></div><div class="houseicon">⌂</div></div>
+<section class="panel"><div class="eyebrow">DAILY DOOR GOAL</div><div class="row"><div class="goalnum"><span id="goalCount">0</span> <span>/ 120</span></div><strong id="goalPercent">0%</strong></div><div class="progress"><div class="fill" id="goalFill"></div></div><small id="remaining">120 doors remaining · 30 doors/hour target</small></section>
+<div class="stats" id="stats"></div>
+<div class="tabs"><button id="fieldTab" class="active" onclick="tab('field')">Field</button><button id="timeTab" onclick="tab('time')">Time</button></div>
+<section id="fieldView" class="panel">
+<div class="row"><h2>House Tracker</h2><span class="pill" id="loggedCount">0 logged</span></div>
+<div class="summary"><div class="mini"><strong class="green" id="answeredCount">0</strong><small>Answered · Skip</small></div><div class="mini"><strong id="missedCount">0</strong><small>No answer · Revisit</small></div></div>
+<form id="houseForm"><label for="address">House number / address</label><input id="address" autocomplete="off" placeholder="e.g. 1245 Oak St" required maxlength="160">
+<label for="houseStatus">Door result</label><select id="houseStatus"><option value="missed">No answer — revisit after 5 PM</option><option value="answered">Answered — don't re-knock</option><option value="skip">Do not knock again</option></select>
+<button class="primary full" type="submit">+ Log house & count door</button><div class="notice" id="duplicate" aria-live="polite"></div></form>
+<div style="margin-top:23px" class="row"><h2>Saved houses</h2><small id="recordCount">0 records</small></div>
+<div class="filter"><button class="active" data-filter="all">All</button><button data-filter="answered">Answered</button><button data-filter="missed">Revisit</button><button data-filter="skip">Skip</button></div>
+<div id="houseList"><div class="muted">No houses logged yet.</div></div>
+</section>
+<section id="timeView" class="panel hidden"><h2>Hourly Door Targets</h2><p class="muted">120 doors over four hours · one door every two minutes.</p><div id="checkpoints"></div>
+<label for="checkTime">Compare your progress to a checkpoint</label><select id="checkTime"><option value="30">2:00 PM</option><option value="60">3:00 PM</option><option value="90">4:00 PM</option><option value="120">5:00 PM</option></select>
+<div class="mini" style="margin-top:13px"><strong id="checkMessage"></strong><small id="checkDescription"></small></div>
+<p class="notice">Checkpoints compare your total doors with the selected time; they don't automatically detect your pace from the current clock.</p></section>
+<section class="panel"><h2>End-of-Shift Report</h2><button class="primary full" id="copyReport">Copy Complete Field Report</button><div class="actions"><button class="secondary" id="copyHouses">Copy House List</button><button class="secondary" id="downloadCSV">Download CSV</button><button class="secondary" id="backup">Backup Data</button><button class="secondary" id="restoreButton">Restore Backup</button></div><input id="restoreFile" type="file" accept=".json,application/json" class="hidden">
+<button class="danger full" id="reset">Reset for New Shift</button><div class="notice" id="feedback" role="status"></div><p class="notice">Your data is saved locally in this browser on this device. It does not sync between coworkers or devices. Back it up before clearing browser data. Do not store customer names, phone numbers, or eligibility documents in house notes.</p></section>
+</main>
+<script>
+const KEY='field_tracker_v1';
+const defaults=()=>({doors:0,talk:0,presentation:0,close:0,sale:0,houses:[]});
+let data=defaults(),filter='all';
+try{let d=JSON.parse(localStorage.getItem(KEY));if(d&&typeof d==='object')data={...defaults(),...d,houses:Array.isArray(d.houses)?d.houses:[]}}catch(e){}
+const $=id=>document.getElementById(id);
+const names=[['doors','Doors'],['talk','Talk to'],['presentation','Presentation'],['close','Close'],['sale','Sale']];
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){$('feedback').textContent='Saving failed. Please export a backup.'}};
+const safe=n=>Math.max(0,Math.floor(Number(n)||0));
+const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function change(k,delta){data[k]=safe(data[k]+delta);save();render()}
+function render(){
+ $('goalCount').textContent=data.doors;$('goalPercent').textContent=Math.round(data.doors/120*100)+'%';$('goalFill').style.width=Math.min(100,data.doors/120*100)+'%';
+ $('remaining').textContent=Math.max(0,120-data.doors)+' doors remaining · 30 doors/hour target';
+ $('stats').innerHTML=names.map(([k,label],i)=>`<div class="stat ${i===0?'wide':''}"><div class="statlabel">${label}</div><div class="statbottom"><span class="num">${safe(data[k])}</span><div class="controls"><button class="round" aria-label="Subtract ${label}" data-counter="${k}" data-delta="-1">−</button><button class="round plus" aria-label="Add ${label}" data-counter="${k}" data-delta="1">+</button></div></div></div>`).join('');
+ $('loggedCount').textContent=data.houses.length+' logged';$('recordCount').textContent=data.houses.length+' records';
+ $('answeredCount').textContent=data.houses.filter(h=>h.status==='answered').length;
+ $('missedCount').textContent=data.houses.filter(h=>h.status==='missed').length;
+ let shown=data.houses.filter(h=>filter==='all'||h.status===filter);
+ $('houseList').innerHTML=shown.length?shown.map(h=>`<div class="house"><div><div class="addr">${escapeHTML(h.address)}</div><div class="sub">${h.status==='answered'?'Answered · skip':h.status==='missed'?'No answer · revisit':'Do not knock'}</div></div><div style="display:flex;gap:5px"><button data-edit="${escapeHTML(h.id)}">Status</button><button aria-label="Delete house" data-delete="${escapeHTML(h.id)}">✕</button></div></div>`).join(''):'<div class="muted">No houses in this list.</div>';
+ $('checkpoints').innerHTML=[['2:00 PM',30],['3:00 PM',60],['4:00 PM',90],['5:00 PM',120]].map(([t,n])=>`<div class="row checkpoint"><div><strong>${t}</strong><div class="muted" style="font-size:12px">Door #${n}</div></div><span class="checkright">${data.doors>=n?'✓ Reached':n-data.doors+' to go'}</span></div>`).join('');
+ const n=Number($('checkTime').value);$('checkMessage').textContent=data.doors>=n?'Checkpoint reached!':(n-data.doors)+' doors to checkpoint';$('checkDescription').textContent='Goal: '+n+' doors by '+({30:'2',60:'3',90:'4',120:'5'}[n])+':00 PM';
+}
+document.addEventListener('click',e=>{let b=e.target.closest('[data-counter]');if(b)change(b.dataset.counter,Number(b.dataset.delta));
+ let edit=e.target.closest('[data-edit]');if(edit){let h=data.houses.find(x=>x.id===edit.dataset.edit);if(h){let next=h.status==='missed'?'answered':h.status==='answered'?'skip':'missed';if(h.status!=='answered'&&next==='answered')data.talk++;if(h.status==='answered'&&next!=='answered')data.talk=Math.max(0,data.talk-1);h.status=next;save();render()}}
+ let del=e.target.closest('[data-delete]');if(del&&confirm('Remove this house from the log? The door counter will stay unchanged.')){data.houses=data.houses.filter(h=>h.id!==del.dataset.delete);save();render()}});
+$('houseForm').addEventListener('submit',e=>{e.preventDefault();let a=$('address').value.trim();if(!a)return;if(data.houses.some(h=>h.address.toLowerCase()===a.toLowerCase())){$('duplicate').textContent='Already logged — find this house below to update its status.';return}
+let s=$('houseStatus').value;data.houses.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),address:a,status:s});data.doors++;if(s==='answered')data.talk++;$('address').value='';$('duplicate').textContent='Saved.';save();render()});
+document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()});
+function tab(t){$('fieldView').classList.toggle('hidden',t!=='field');$('timeView').classList.toggle('hidden',t!=='time');$('fieldTab').classList.toggle('active',t==='field');$('timeTab').classList.toggle('active',t==='time')}
+$('checkTime').onchange=render;
+function report(){return ['FIELD REPORT',...names.map(([k,label])=>`${label}: ${data[k]}`),`Talk rate: ${data.doors?(data.talk/data.doors*100).toFixed(1):'0.0'}%`,`Sale rate per door: ${data.doors?(data.sale/data.doors*100).toFixed(2):'0.00'}%`,'',`Answered: ${data.houses.filter(h=>h.status==='answered').length}`,`Revisit: ${data.houses.filter(h=>h.status==='missed').length}`,'','HOUSE LOG',...data.houses.map(h=>`${h.address} | ${h.status}`)].join('\n')}
+async function copy(s){try{await navigator.clipboard.writeText(s);$('feedback').textContent='Copied! Paste it into your chat or Notes.'}catch(e){prompt('Select and copy this report:',s)}}
+$('copyReport').onclick=()=>copy(report());$('copyHouses').onclick=()=>copy(data.houses.map(h=>`${h.address} | ${h.status}`).join('\n'));
+function download(name,contents,type){let blob=new Blob([contents],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}
+$('downloadCSV').onclick=()=>{const csv=(s)=>'"'+String(s).replace(/"/g,'""')+'"';download('door-tracker-'+new Date().toISOString().slice(0,10)+'.csv',['Address,Status',...data.houses.map(h=>csv(h.address)+','+csv(h.status))].join('\r\n'),'text/csv')};
+$('backup').onclick=()=>download('door-tracker-backup.json',JSON.stringify(data,null,2),'application/json');
+$('restoreButton').onclick=()=>$('restoreFile').click();
+$('restoreFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!names.every(([k])=>Number.isInteger(d[k])&&d[k]>=0)||!Array.isArray(d.houses)||!d.houses.every(h=>typeof h.address==='string'&&typeof h.id==='string'&&['answered','missed','skip'].includes(h.status)))throw Error('Invalid backup');if(confirm('Replace the current tracker with this backup?')){data=d;save();render();$('feedback').textContent='Backup restored.'}}catch(err){alert('This file is not a valid tracker backup.')}e.target.value=''};
+$('reset').onclick=()=>{if(confirm('Reset ALL counters and house records? Export a backup first if you need them.')){data=defaults();save();render();$('feedback').textContent='New shift started.'}};
+render();
+if('serviceWorker' in navigator && location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script></body></html>
